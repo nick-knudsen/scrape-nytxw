@@ -12,12 +12,13 @@ BOT_NAME = "nytxw"
 SPIDER_MODULES = ["nytxw.spiders"]
 NEWSPIDER_MODULE = "nytxw.spiders"
 
+SPLASH_URL = 'http://localhost:8050'
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = "nytxw (+http://www.yourdomain.com)"
 
 # Obey robots.txt rules
-ROBOTSTXT_OBEY = True
+ROBOTSTXT_OBEY = False
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 #CONCURRENT_REQUESTS = 32
@@ -44,15 +45,19 @@ ROBOTSTXT_OBEY = True
 
 # Enable or disable spider middlewares
 # See https://docs.scrapy.org/en/latest/topics/spider-middleware.html
-#SPIDER_MIDDLEWARES = {
+SPIDER_MIDDLEWARES = {
 #    "nytxw.middlewares.NytxwSpiderMiddleware": 543,
-#}
+    'scrapy_splash.SplashDeduplicateArgsMiddleware': 100,
+}
 
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
-#DOWNLOADER_MIDDLEWARES = {
+DOWNLOADER_MIDDLEWARES = {
 #    "nytxw.middlewares.NytxwDownloaderMiddleware": 543,
-#}
+    'scrapy_splash.SplashCookiesMiddleware': 723,
+    'scrapy_splash.SplashMiddleware': 725,
+    'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware': 810,
+}
 
 # Enable or disable extensions
 # See https://docs.scrapy.org/en/latest/topics/extensions.html
@@ -91,3 +96,6 @@ ROBOTSTXT_OBEY = True
 REQUEST_FINGERPRINTER_IMPLEMENTATION = "2.7"
 TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
 FEED_EXPORT_ENCODING = "utf-8"
+
+# Define the Splash DupeFilter
+DUPEFILTER_CLASS = 'scrapy_splash.SplashAwareDupeFilter'
