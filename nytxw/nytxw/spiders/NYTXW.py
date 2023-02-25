@@ -79,28 +79,4 @@ class NytxwSpider(scrapy.Spider):
         with open('response.json', 'w') as f:
             f.write(data)
 
-    def login(self, response):
-        login_page = response.css('div.pz-nav__actions a::attr(href)').extract()[1] 
-        login_page = response.urljoin(login_page)
-        yield SplashRequest(login_page, callback=self.enter_email)
-        
-    def enter_email(self, response):
-        email, password = get_secrets()
-        enter_password = SplashFormRequest.from_response(
-            response,
-            formname='Lire-UI-Form',
-            formdata={'email': email},
-            callback=self.enter_password
-        )
-    
-    def enter_password(self, response):
-        email, password = get_secrets()
-        return SplashFormRequest.from_response(
-            response,
-            formname='Lire-UI-Form',
-            formdata={'email': email,
-                      'password': password},
-                      callback=self.parse
-        )
-
     
