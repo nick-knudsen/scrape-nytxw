@@ -3,6 +3,39 @@ import toml
 import json
 from scrapy_splash import SplashRequest, SplashFormRequest
 
+
+lua_script = '''
+function main(splash, args)
+    splash:init_cookies(splash.args.cookies)
+    
+    assert(splash:go(args.url))
+    assert(splash:wait(1))
+    
+    splash:set_viewport_full()
+    
+    local email_input = splash:select('input[name=email]')
+    local email = args.email
+    email_input:send_text(email)
+    assert(splash:wait(3))
+
+    local password_input = splash:select('input[name=password]')
+    local password = args.password
+    password_input:send_text(password)
+    assert(splash:wait(1))
+
+    local password_submit = splash:select('input[id= TODO ]')
+    password_submit:click()
+    assert(splash:wait(3))
+
+    return {
+        html = splash:html(),
+        url = splash:url(),
+        cookies = splash:get_cookies(),
+        }
+
+    end
+'''
+
 def get_secrets():
     secret_path = 'secrets.toml'
     secrets = toml.load(secret_path)
@@ -11,20 +44,15 @@ def get_secrets():
 
     return username, password
 
-def authentication_failed(response):
-    pass
-
 class NytxwSpider(scrapy.Spider):
     name = "NYTXW"
-    allowed_domains = ["nytimes.com"]
  
     def start_requests(self):
-        urls = [
-                #"https://www.nytimes.com/crosswords/game/daily/1993/11/21",
-                f'https://myaccount.nytimes.com/auth/enter-email?redirect_uri=https%3A%2F%2Fwww.nytimes.com%2Fcrosswords%2Fgame%2Fdaily%2F1993%2F11%2F21&response_type=cookie&client_id=games&application=crosswords&asset=navigation-bar'
-            ]
-        for url in urls:
-            yield SplashRequest(url=url, callback=self.enter_email)
+        login_url = f'https://myaccount.nytimes.com/auth/enter-email?redirect_uri=https%3A%2F%2Fwww.nytimes.com%2Fcrosswords%2Fgame%2Fdaily%2F1993%2F11%2F21&response_type=cookie&client_id=games&application=crosswords&asset=navigation-bar'
+        yield SplashRequest(url=login_url,
+                            callback=self.enter_email,
+                            endpoint='execute',
+                            )
 
     def login(self, response):
         login_page = response.css('div.pz-nav__actions a::attr(href)').extract()[1] 
@@ -56,11 +84,3 @@ class NytxwSpider(scrapy.Spider):
         )
         data = json.loads(request.text)
         print(data)
-        
-    
-    def after_login(self, response):
-        if "authentication failed" in response.body:
-            print("Login failed")
-            self.logger.error("Login failed")
-            return
-        print("Login successful")
