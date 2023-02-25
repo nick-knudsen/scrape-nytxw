@@ -1,6 +1,7 @@
 import scrapy
 import toml
 import json
+from scrapy_splash import SplashRequest, SplashFormRequest
 
 def get_secrets():
     secret_path = 'secrets.toml'
@@ -18,27 +19,32 @@ class NytxwSpider(scrapy.Spider):
     allowed_domains = ["nytimes.com"]
  
     def start_requests(self):
-        urls = ["https://www.nytimes.com/crosswords/game/daily/1993/11/21"]
+        urls = [
+                #"https://www.nytimes.com/crosswords/game/daily/1993/11/21",
+                f'https://myaccount.nytimes.com/auth/enter-email?redirect_uri=https%3A%2F%2Fwww.nytimes.com%2Fcrosswords%2Fgame%2Fdaily%2F1993%2F11%2F21&response_type=cookie&client_id=games&application=crosswords&asset=navigation-bar'
+            ]
         for url in urls:
-            yield scrapy.Request(url=url, callback=self.login)
+            yield SplashRequest(url=url, callback=self.enter_email)
 
     def login(self, response):
         login_page = response.css('div.pz-nav__actions a::attr(href)').extract()[1] 
         login_page = response.urljoin(login_page)
-        yield scrapy.Request(login_page, callback=self.enter_email)
-
+        yield SplashRequest(login_page, callback=self.enter_email)
+        
     def enter_email(self, response):
         email, password = get_secrets()
-        enter_password = scrapy.FormRequest.from_response(
+        enter_password = SplashFormRequest.from_response(
             response,
+            formname='Lire-UI-Form',
             formdata={'email': email},
             callback=self.enter_password
         )
     
     def enter_password(self, response):
         email, password = get_secrets()
-        return scrapy.FormRequest.from_response(
+        return SplashFormRequest.from_response(
             response,
+            formname='Lire-UI-Form',
             formdata={'email': email,
                       'password': password},
                       callback=self.parse
